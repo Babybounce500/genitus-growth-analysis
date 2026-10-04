@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GENITUS DIVIDENDEN-WACHSTUMS-ANALYSE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#f4f7fb;--surface:#ffffff;--border:#d9e2ec;--accent:#0e7490;--gold:#b45309;--green:#15803d;--red:#b91c1c;--muted:#52606d;--text:#1e293b;--bright:#0f172a;--mono:'Space Mono',monospace;--sans:'Rajdhani',sans-serif;}
+    :root.dark-theme{--bg:#080c10;--surface:#0d1117;--border:#1e2d3d;--accent:#00d4ff;--gold:#f0c040;--green:#00ff88;--red:#ff3b5c;--muted:#7d92a8;--text:#c8d8e8;--bright:#ffffff;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;min-height:100vh;transition:background .25s,color .25s;}
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:200;}
+    .logo{display:flex;align-items:center;gap:12px;}
+    .logo-mark{width:32px;height:32px;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:14px;color:var(--accent);}
+    .logo-text{font-family:var(--mono);font-size:13px;letter-spacing:3px;color:var(--bright);}
+    .logo-sub{font-family:var(--mono);font-size:10px;letter-spacing:2px;color:var(--muted);display:block;margin-top:1px;}
+    #themeToggleBtn{background:none;border:1px solid var(--border);color:var(--accent);width:30px;height:30px;border-radius:2px;cursor:pointer;font-size:14px;}
+    .cache-badge{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:3px 8px;border:1px solid var(--accent);color:var(--accent);border-radius:2px;text-transform:uppercase;}
+    .main{max-width:1200px;margin:0 auto;padding:20px;}
+    .tabbar{display:flex;gap:6px;margin-bottom:16px;}
+    .tabbtn{background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:10px 16px;border-radius:6px;cursor:pointer;}
+    .tabbtn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+    .tabpanel{display:none;} .tabpanel.active{display:block;}
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
+    select,input[type="text"]{background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 10px;outline:none;border-radius:2px;}
+    input[type="text"]{width:220px;}
+    .count-badge{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto;}
+    table{width:100%;border-collapse:collapse;font-size:12px;background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+    th{font-family:var(--mono);font-size:9px;letter-spacing:1px;color:var(--muted);text-transform:uppercase;padding:9px 12px;text-align:right;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+    th:hover{color:var(--accent);}
+    th.sorted{color:var(--accent);}
+    th:first-child,th:nth-child(2){text-align:left;}
+    td{padding:8px 12px;border-bottom:1px solid rgba(125,146,168,0.15);text-align:right;}
+    td:first-child{font-weight:700;color:var(--accent);text-align:left;font-family:var(--mono);}
+    td:nth-child(2){text-align:left;}
+    .pos{color:var(--green);} .neg{color:var(--red);}
+    .disclaimer{font-size:10px;color:var(--muted);line-height:1.6;border-top:1px solid var(--border);padding-top:10px;margin-top:14px;}
+    .loading-line{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:center;padding:50px;}
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo"><div class="logo-mark">W</div><div><span class="logo-text">GENITUS</span><span class="logo-sub">DIVIDENDEN-WACHSTUMS-ANALYSE</span></div></div>
+  <div style="display:flex;align-items:center;gap:10px"><span class="cache-badge" id="cacheBadge">● lädt...</span><button id="themeToggleBtn" title="Toggle theme">🌙</button></div>
+</header>
+<div class="main">
+  <div class="tabbar">
+    <button class="tabbtn active" data-tab="consistency" onclick="switchTab('consistency')">Konsistenz-Score</button>
+    <button class="tabbtn" data-tab="momentum" onclick="switchTab('momentum')">Momentum-Ranking</button>
+  </div>
+
+  <div class="tabpanel active" id="tab-consistency">
+    <div class="toolbar">
+      <input type="text" id="searchInput1" placeholder="Symbol oder Name suchen..." oninput="renderTable('consistency')">
+      <select id="exchangeSelect1" onchange="renderTable('consistency')"><option value="ALL">Alle Börsen</option></select>
+      <span class="count-badge" id="countBadge1"></span>
+    </div>
+    <table><thead><tr id="headRow1"></tr></thead><tbody id="bodyRows1"><tr><td colspan="7" class="loading-line">Lade Daten...</td></tr></tbody></table>
+  </div>
+
+  <div class="tabpanel" id="tab-momentum">
+    <div class="toolbar">
+      <input type="text" id="searchInput2" placeholder="Symbol oder Name suchen..." oninput="renderTable('momentum')">
+      <select id="exchangeSelect2" onchange="renderTable('momentum')"><option value="ALL">Alle Börsen</option></select>
+      <span class="count-badge" id="countBadge2"></span>
+    </div>
+    <table><thead><tr id="headRow2"></tr></thead><tbody id="bodyRows2"><tr><td colspan="6" class="loading-line">Lade Daten...</td></tr></tbody></table>
+  </div>
+
+  <div class="disclaimer">
+    Basis: jährliche Gesamtdividende, Wachstumsrate nur zwischen direkt aufeinanderfolgenden Kalenderjahren (Lücken werden übersprungen, nicht interpoliert). Symbole mit einer Einzeljahres-Wachstumsrate &gt;300% wurden komplett verworfen (Sonderdividenden/Datenartefakte, verzerren sonst CoV und Momentum). <b>Konsistenz (CoV)</b> = Standardabweichung / |Mittelwert| der Wachstumsraten — niedriger ist stabiler/vorhersagbarer, unabhängig von der Höhe der Rate selbst. <b>Momentum</b> = letzte Wachstumsrate minus Ø der 3 Raten davor — positiv heißt die Erhöhungen werden größer (oft Vertrauenssignal des Managements), negativ heißt sie werden kleiner (häufig ein Frühwarnsignal vor einer Kürzung). Reine Cache-Auswertung, keine Live-Abfrage, keine Anlageberatung.
+  </div>
+</div>
+<script>
+  const DATA_URL = 'https://raw.githubusercontent.com/Babybounce500/genitus-ticker-cache/main/growth-analysis-data.json';
+  (function(){
+    const KEY='genitusTheme:growthanalysis';
+    function applyTheme(t){ document.documentElement.classList.toggle('dark-theme', t==='dark'); localStorage.setItem(KEY,t); const btn=document.getElementById('themeToggleBtn'); if(btn) btn.textContent = t==='dark' ? '☀' : '🌙'; }
+    let saved = localStorage.getItem(KEY) || 'light';
+    applyTheme(saved);
+    document.getElementById('themeToggleBtn').addEventListener('click', function(){ applyTheme(document.documentElement.classList.contains('dark-theme')?'light':'dark'); });
+  })();
+
+  window.switchTab = function(tab){
+    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+    document.querySelectorAll('.tabpanel').forEach(p=>p.classList.toggle('active', p.id==='tab-'+tab));
+  };
+
+  let rowsData = [];
+  let sortKeys = { consistency:'cov', momentum:'momentumDelta' };
+  let sortDirs = { consistency:'asc', momentum:'desc' };
+  const COLUMNS = {
+    consistency: [ {key:'symbol',label:'Symbol'},{key:'name',label:'Name'},{key:'exchange',label:'Börse'},{key:'cov',label:'CoV'},{key:'meanGrowth',label:'Ø Wachstum/J'},{key:'stdGrowth',label:'Std.-Abw.'},{key:'nYears',label:'Jahre'} ],
+    momentum: [ {key:'symbol',label:'Symbol'},{key:'name',label:'Name'},{key:'exchange',label:'Börse'},{key:'momentumDelta',label:'Momentum-Delta'},{key:'recentGrowth',label:'Letzte Rate'},{key:'priorAvgGrowth',label:'Ø 3J davor'} ],
+  };
+
+  function buildHead(tab){
+    const idx = tab==='consistency'?1:2;
+    document.getElementById('headRow'+idx).innerHTML = COLUMNS[tab].map(c=>`<th class="${sortKeys[tab]===c.key?'sorted':''}" onclick="sortBy('${tab}','${c.key}')">${c.label}${sortKeys[tab]===c.key?(sortDirs[tab]==='asc'?' ▲':' ▼'):''}</th>`).join('');
+  }
+  window.sortBy = function(tab, key){
+    if(sortKeys[tab]===key) sortDirs[tab] = sortDirs[tab]==='asc'?'desc':'asc';
+    else { sortKeys[tab]=key; sortDirs[tab]='desc'; }
+    buildHead(tab); renderTable(tab);
+  };
+
+  function fmtPct(v, withSign){
+    if(v==null) return '<span style="color:var(--muted)">n.v.</span>';
+    const cls = v>0?'pos':(v<0?'neg':'');
+    return `<span class="${cls}">${withSign&&v>0?'+':''}${v.toFixed(2)}%</span>`;
+  }
+
+  window.renderTable = function(tab){
+    const idx = tab==='consistency'?1:2;
+    const q = document.getElementById('searchInput'+idx).value.toLowerCase().trim();
+    const ex = document.getElementById('exchangeSelect'+idx).value;
+    let rows = rowsData.filter(r=> (ex==='ALL'||r.exchange===ex) && (!q || r.symbol.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)));
+    if(tab==='consistency') rows = rows.filter(r=>r.cov!=null);
+    const sortKey = sortKeys[tab], sortDir = sortDirs[tab];
+    rows.sort((a,b)=>{
+      const av=a[sortKey], bv=b[sortKey];
+      if(typeof av==='string') return sortDir==='asc'?av.localeCompare(bv):bv.localeCompare(av);
+      return sortDir==='asc'?av-bv:bv-av;
+    });
+    document.getElementById('countBadge'+idx).textContent = `${rows.length} Treffer`;
+    if(tab==='consistency'){
+      document.getElementById('bodyRows1').innerHTML = rows.map(r=>`<tr>
+        <td>${r.symbol}</td><td>${r.name}</td><td>${r.exchange}</td>
+        <td>${r.cov.toFixed(3)}</td><td>${fmtPct(r.meanGrowth,true)}</td><td>${r.stdGrowth.toFixed(2)}</td><td>${r.nYears}</td>
+      </tr>`).join('');
+    } else {
+      document.getElementById('bodyRows2').innerHTML = rows.map(r=>`<tr>
+        <td>${r.symbol}</td><td>${r.name}</td><td>${r.exchange}</td>
+        <td>${fmtPct(r.momentumDelta,true)}</td><td>${fmtPct(r.recentGrowth,true)}</td><td>${fmtPct(r.priorAvgGrowth,true)}</td>
+      </tr>`).join('');
+    }
+  };
+
+  async function loadData(){
+    try{
+      const res = await fetch(DATA_URL);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      rowsData = await res.json();
+      document.getElementById('cacheBadge').textContent = `● ${rowsData.length} Firmen gecacht`;
+      const exchanges = [...new Set(rowsData.map(r=>r.exchange))].sort();
+      ['exchangeSelect1','exchangeSelect2'].forEach(id=>{
+        const sel = document.getElementById(id);
+        exchanges.forEach(ex=>{ const o=document.createElement('option'); o.value=ex; o.textContent=ex; sel.appendChild(o); });
+      });
+      buildHead('consistency'); buildHead('momentum');
+      renderTable('consistency'); renderTable('momentum');
+    }catch(e){
+      document.getElementById('cacheBadge').textContent = '● Fehler';
+      document.getElementById('bodyRows1').innerHTML = `<tr><td colspan="7" class="loading-line">Fehler: ${e.message}</td></tr>`;
+    }
+  }
+  loadData();
+</script>
+</body>
+</html>
